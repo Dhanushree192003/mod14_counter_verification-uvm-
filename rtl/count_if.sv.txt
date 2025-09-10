@@ -1,0 +1,35 @@
+interface count_if(input bit clk);
+	logic load;
+	logic updown;
+	logic resetn;
+	logic [3:0]data_in;
+	logic [3:0]count;
+
+clocking dr_cb@(posedge clk);
+	default input #1 output #1;
+	output data_in;
+	output load;
+	output updown;
+	output resetn;
+endclocking
+
+clocking wr_cb@(posedge clk);
+	default input #1 output #1;
+	input data_in;
+	input load;
+	input updown;
+	input resetn;
+endclocking
+
+clocking rd_cb@(posedge clk);
+	default input #1 output #1;
+	input count;
+endclocking
+
+modport DRV(clocking dr_cb);
+
+modport WR_MON(clocking wr_cb);
+
+modport RD_MON(clocking rd_cb);
+
+endinterface

@@ -1,0 +1,39 @@
+class dst_monitor extends uvm_monitor;
+	
+	`uvm_component_utils(dst_monitor)
+	dst_config dst_cfg_h;
+	virtual count_if.RD_MON vif;
+	uvm_analysis_port#(dst_xtn) dst_monitor_port;
+
+function new(string name="dst_monitor",uvm_component parent);
+	super.new(name,parent);
+	dst_monitor_port=new("dst_monitor_port",this);
+endfunction
+
+function void build_phase(uvm_phase phase);
+	super.build_phase(phase);
+	if(!uvm_config_db#(dst_config)::get(this,"","dst_config",dst_cfg_h))
+	`uvm_fatal("FATAL","cannot get config")
+	endfunction
+
+function void connect_phase(uvm_phase phase);
+	vif=dst_cfg_h.vif;
+endfunction
+
+task run_phase(uvm_phase phase);
+	forever
+			begin
+			collect_data();
+		end
+endtask
+
+task collect_data();
+	dst_xtn dst_item;
+	dst_item=dst_xtn::type_id::create("dst_item");
+	@(vif.rd_cb)
+	dst_item.count<=vif.rd_cb.count;
+	`uvm_info("DST_MONITOR", $sformatf("Sampled from DUT: %s", dst_item.sprint()), UVM_LOW)
+	dst_monitor_port.write(dst_item);
+endtask
+
+endclass

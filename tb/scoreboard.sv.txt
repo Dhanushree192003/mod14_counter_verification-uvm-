@@ -1,0 +1,117 @@
+class scoreboard extends uvm_scoreboard;
+
+	`uvm_component_utils(scoreboard)
+	uvm_tlm_analysis_fifo #(src_xtn) src_fifoh;
+	uvm_tlm_analysis_fifo #(dst_xtn) dst_fifoh;
+
+	src_xtn src_xtnh;
+	dst_xtn dst_xtnh;
+
+	int data_verified=0;
+	int src_xtn_count=0;
+	int dst_xtn_count=0;
+
+	static bit [3:0]ref_count;
+
+function new(string name="scoreboard",uvm_component parent);
+	super.new(name,parent);
+	counter_cg=new();
+endfunction
+
+function void build_phase(uvm_phase phase);
+	super.build_phase(phase);
+	src_fifoh=new("src_fifoh",this);
+	dst_fifoh=new("dst_fifoh",this);
+	src_xtnh=src_xtn::type_id::create("src_xtnh");
+	dst_xtnh=dst_xtn::type_id::create("dst_xtnh");
+endfunction
+
+	covergroup counter_cg;
+		option.per_instance=1;
+		LOAD:coverpoint src_xtnh.load{
+			bins low={0};
+			bins high={1};
+			}
+
+		UP_DOWN:coverpoint src_xtnh.updown{
+			bins low={0};
+			bins high={1};
+			}
+		
+		DATA_IN:coverpoint src_xtnh.data_in{
+			bins data[]={0,1,2,3,4,5,6,7,8,9,10,11,12,13};
+			}
+
+	endgroup
+
+task run_phase(uvm_phase phase);
+	forever
+		begin
+			fork
+				begin
+					src_fifoh.get(src_xtnh);
+					`uvm_info("sb",$sformatf("src_xtn printing from scoreboard \n %s",src_xtnh.sprint()),UVM_LOW)
+					check_data(src_xtnh);
+					src_xtn_count++;
+				end
+
+				begin
+					dst_fifoh.get(dst_xtnh);
+					`uvm_info("sb",$sformatf("dst_xtn printing from scoreboard \n %s",dst_xtnh.sprint()),UVM_LOW)
+					compare(dst_xtnh);
+					dst_xtn_count++;
+				end
+			join
+		end
+endtask
+
+task check_data(src_xtn src_xtnh);
+	if(src_xtnh.resetn)
+		begin
+			ref_count<=4'd0;
+		end
+
+	else if(src_xtnh.load && src_xtnh.data_in<=4'd13)   
+        	begin  
+          		ref_count<=src_xtnh.data_in;
+        	end   
+   
+        else if(src_xtnh.updown) 
+      		begin      
+            		if(ref_count==4'd13)   
+                		ref_count<=4'd0;
+            		else
+               	 		ref_count<=ref_count+1'b1;
+      		end    
+  
+        		else
+      				begin                  
+            				if (ref_count==4'd0)    
+                				ref_count<=4'd13;
+            				else
+                				ref_count<=ref_count-1'b1;
+      				end
+	$display("ref_count=%0d",ref_count);
+
+endtask
+
+task compare(dst_xtn dst_xtnh);
+	if(dst_xtnh.count==ref_count) 
+		begin
+			counter_cg.sample();
+			data_verified++;
+			`uvm_info("scoreboard","=====================================count matches========================================",UVM_LOW) 
+		end
+	else
+			`uvm_info("sb","===============================count is not matched===============================",UVM_LOW)
+
+endtask
+
+function void report_phase(uvm_phase phase);
+	`uvm_info("scoreboard",$sformatf("src_xtn_count is %0d",src_xtn_count),UVM_LOW)
+	`uvm_info("scoreboard",$sformatf("dst_xtn_count is %0d",dst_xtn_count),UVM_LOW)
+	`uvm_info("scoreboard",$sformatf("data_verified is %0d",data_verified),UVM_LOW)
+endfunction
+
+endclass
+

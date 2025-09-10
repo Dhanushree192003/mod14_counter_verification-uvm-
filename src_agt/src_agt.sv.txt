@@ -1,0 +1,31 @@
+class src_agt extends uvm_agent;
+
+	`uvm_component_utils(src_agt);
+	
+	src_driver src_drvh;
+	src_monitor src_monh;
+	src_sequencer src_seqrh;
+	src_config agt_src_cfgh;
+	
+
+function new(string name="src_agt",uvm_component parent);
+	super.new(name,parent);
+endfunction
+
+function void build_phase(uvm_phase phase);
+	super.build_phase(phase);
+	if(!uvm_config_db#(src_config)::get(this,"","src_config",agt_src_cfgh))
+		`uvm_fatal("FATAL","cannot get a config")
+	src_monh=src_monitor::type_id::create("src_monh",this);
+	if(agt_src_cfgh.is_active==UVM_ACTIVE)
+		begin
+			src_drvh=src_driver::type_id::create("src_drvh",this);
+			src_seqrh=src_sequencer::type_id::create("src_seqrh",this);
+		end
+endfunction
+
+function void connect_phase(uvm_phase phase);
+	src_drvh.seq_item_port.connect(src_seqrh.seq_item_export);
+endfunction
+
+endclass

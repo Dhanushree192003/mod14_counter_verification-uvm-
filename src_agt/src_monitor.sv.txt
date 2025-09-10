@@ -1,0 +1,39 @@
+class src_monitor extends uvm_monitor;
+	`uvm_component_utils(src_monitor)
+	src_config src_cfg_h;
+	virtual count_if.WR_MON vif;
+	uvm_analysis_port#(src_xtn) src_monitor_port;
+	src_xtn src_item;
+
+function new(string name= "src_monitor",uvm_component parent);
+	super.new(name,parent);
+	src_monitor_port=new("src_monitor_port",this);
+endfunction
+
+function void build_phase(uvm_phase phase);
+	super.build_phase(phase);
+	if(!uvm_config_db#(src_config)::get(this,"","src_config",src_cfg_h))
+	`uvm_fatal("FATAL","cannot get config")
+	src_item=src_xtn::type_id::create("src_item");
+endfunction
+
+function void connect_phase(uvm_phase phase);
+	vif=src_cfg_h.vif;
+endfunction
+
+task run_phase(uvm_phase phase);
+	forever
+		collect_data();
+endtask
+
+task collect_data();
+	@(vif.wr_cb)
+	src_item.resetn<=vif.wr_cb.resetn;
+	src_item.load<=vif.wr_cb.load;
+	src_item.updown<=vif.wr_cb.updown;
+	src_item.data_in<=vif.wr_cb.data_in;
+	`uvm_info("SRC_MONITOR",$sformatf("printing from src_monitor \n %s",src_item.sprint()),UVM_LOW)
+	src_monitor_port.write(src_item);
+endtask
+
+endclass

@@ -1,0 +1,47 @@
+class src_driver extends uvm_driver#(src_xtn);
+
+	`uvm_component_utils(src_driver)
+	src_config src_cfg_h;
+	virtual count_if.DRV vif;
+
+function new(string name="src_driver",uvm_component parent);
+	super.new(name,parent);
+endfunction
+
+function void build_phase(uvm_phase phase);
+	super.build_phase(phase);
+	if(!uvm_config_db#(src_config)::get(this,"","src_config",src_cfg_h))
+	`uvm_fatal("FATAL","cannot get config")
+	req=src_xtn::type_id::create("req");
+endfunction
+
+function void connect_phase(uvm_phase phase);
+	vif=src_cfg_h.vif;
+endfunction
+
+task run_phase(uvm_phase phase);
+	@(vif.dr_cb)
+	vif.dr_cb.resetn<=1'b0;
+	repeat(2)
+	@(vif.dr_cb)
+	vif.dr_cb.resetn<=1'b1;
+	forever
+		begin
+			seq_item_port.get_next_item(req);
+			send_to_dut(req);
+			seq_item_port.item_done();
+		end
+endtask
+
+task send_to_dut(src_xtn req);
+	@(vif.dr_cb)
+	//vif.dr_cb.resetn<=req.resetn;
+	vif.dr_cb.load<=req.load;
+	vif.dr_cb.updown<=req.updown;
+	vif.dr_cb.data_in<=req.data_in;
+	`uvm_info("SRC_DRIVER",$sformatf("printing from src_driver \n %s",req.sprint()),UVM_LOW)
+
+
+endtask
+
+endclass

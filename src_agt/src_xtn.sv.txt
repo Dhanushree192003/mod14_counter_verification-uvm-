@@ -1,0 +1,23 @@
+class src_xtn extends uvm_sequence_item;
+
+	`uvm_object_utils(src_xtn)
+
+	rand bit resetn;
+	rand bit load;
+	rand bit updown;
+	rand bit [3:0] data_in;
+
+	constraint c1{resetn dist{0:=90,1:=10};}
+	constraint c2{load dist{0:=90,1:=10};}
+	constraint c3{updown dist{0:=5,1:=5};}
+	constraint c4{data_in<=13;}
+
+function void do_print(uvm_printer printer);
+	super.do_print(printer);
+	printer.print_field("resetn",this.resetn,1,UVM_DEC);
+	printer.print_field("load",this.load,1,UVM_DEC);
+	printer.print_field("updown",this.updown,1,UVM_DEC);
+	printer.print_field("data_in",this.data_in,4,UVM_DEC);
+endfunction
+
+endclass	

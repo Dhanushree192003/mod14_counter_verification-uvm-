@@ -1,0 +1,8 @@
+class dest_seqs extends uvm_sequence#(dst_xtn);
+	`uvm_object_utils(dest_seqs)
+
+function new(string name="dest_seqs");
+	super.new(name);
+endfunction
+
+endclass

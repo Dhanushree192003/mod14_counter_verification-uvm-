@@ -1,0 +1,46 @@
+class base_seq extends uvm_sequence#(src_xtn);
+	`uvm_object_utils(base_seq)
+
+function new(string name="base_seq");
+	super.new(name);
+endfunction 
+
+endclass
+
+class seq_one extends base_seq;
+	`uvm_object_utils(seq_one)
+
+function new(string name="seq_one");
+	super.new(name);
+endfunction
+
+task body();
+	repeat(50)
+		begin
+			req=src_xtn::type_id::create("src_xtn");
+			start_item(req);
+			assert(req.randomize() with {data_in inside{[0:7]};})
+			finish_item(req);
+		end
+endtask
+
+endclass
+
+class seq_two extends base_seq;
+	`uvm_object_utils(seq_two)
+
+function new(string name="seq_two");
+	super.new(name);
+endfunction
+
+task body();
+	repeat(50)
+		begin
+			req=src_xtn::type_id::create("src_xtn");
+			start_item(req);
+			assert(req.randomize() with{data_in inside{[8:13]};})
+			finish_item(req);
+		end
+endtask
+
+endclass

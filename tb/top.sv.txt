@@ -1,0 +1,30 @@
+module top;
+
+	import uvm_pkg::*;
+
+	import test_pkg::*;
+	`include "uvm_macros.svh"
+
+	bit clk;
+
+	always
+		#5 clk=~clk;
+
+	count_if src_if(clk);
+	count_if dst_if(clk);
+
+	mod14_up_down_counter DUV (.clk(clk),
+		       		   .resetn(src_if.resetn),
+				   .load(src_if.load),
+				   .updown(src_if.updown),
+				   .data_in(src_if.data_in),
+				   .count(dst_if.count));
+		  
+
+	initial
+		begin
+			uvm_config_db#(virtual count_if)::set(null,"*","src_if",src_if);
+			uvm_config_db#(virtual count_if)::set(null,"*","dst_if",dst_if);
+			run_test();
+		end
+endmodule

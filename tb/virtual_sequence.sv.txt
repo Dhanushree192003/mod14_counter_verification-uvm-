@@ -1,0 +1,56 @@
+class v_seqs extends uvm_sequence#(uvm_sequence_item);
+	`uvm_object_utils(v_seqs)
+	seq_one seq1h;
+	seq_two seq2h;
+	src_sequencer src_seqrh;
+	v_sequencer v_seqrh;
+	env_config m_cfgh;
+
+function new(string name="v_seqs");
+	super.new(name);
+endfunction
+
+task body();
+	if(!uvm_config_db#(env_config)::get(null,get_full_name(),"env_config",m_cfgh))
+	`uvm_fatal("FATAL","cannot get config")
+	assert($cast(v_seqrh,m_sequencer))
+	else
+		begin
+			`uvm_error("v_seqrh","casting is not successfull")
+		end
+	src_seqrh=v_seqrh.srcseqrh;
+endtask
+
+endclass
+
+class v_seqs_one extends v_seqs;
+	`uvm_object_utils(v_seqs_one)
+	seq_one seq1h;
+
+function new(string name="v_seqs_one");
+	super.new(name);
+endfunction
+
+task body();
+	super.body();
+	seq1h=seq_one::type_id::create("seq1h");
+	seq1h.start(src_seqrh);
+endtask
+
+endclass
+
+class v_seqs_two extends v_seqs;
+	`uvm_object_utils(v_seqs_two)
+	seq_two seq2h;
+
+function new(string name="v_seqs_two");
+	super.new(name);
+endfunction
+
+task body();
+	super.body();
+	seq2h=seq_two::type_id::create("seq2h");
+	seq2h.start(src_seqrh);
+endtask
+
+endclass
